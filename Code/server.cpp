@@ -70,6 +70,23 @@ int main()
 
     std::cout << "Server is listening..." << std::endl;
 
+    //Accepting a client
+    std::cout << "Waiting for client..." << std::endl;
+
+    SOCKET clientSocket = accept(serverSocket, NULL, NULL);
+
+    if (clientSocket == INVALID_SOCKET)
+    {
+        std::cout << "Accept failed." << std::endl;
+        closesocket(serverSocket);
+        WSACleanup();
+        return 1;
+    }
+
+    std::cout << "Client connected!" << std::endl;
+
+    
+
     WSACleanup();
 
     return 0;
