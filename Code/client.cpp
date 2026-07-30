@@ -196,6 +196,12 @@ int main()
             }
             sendLine(clientSocket, "MOVE:" + std::to_string(pos));
         }
+
+        //Handle WAIT
+        else if (line == "WAIT")
+        {
+            std::cout << "Waiting for opponent...\n";
+        }
     }
 
 
