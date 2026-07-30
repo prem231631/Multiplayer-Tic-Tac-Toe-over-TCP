@@ -217,6 +217,51 @@ int main()
             std::cout << "      YOU WIN!\n";
             std::cout << "************************\n";
         }
+
+        //Handle RESULT:LOSE
+        else if (line == "RESULT:LOSE")
+        {
+            std::cout << "\n************************\n";
+            std::cout << "      YOU LOSE!\n";
+            std::cout << "************************\n";
+        }
+
+        //Handle RESULT:DRAW
+        else if (line == "RESULT:DRAW")
+        {
+            std::cout << "\n************************\n";
+            std::cout << "     MATCH DRAW!\n";
+            std::cout << "************************\n";
+        }
+
+        //Hangle Restart
+        else if (line == "RESTART?")
+        {
+            char choice;
+
+            std::cout << "\nPlay Again? (Y/N): ";
+            std::cin >> choice;
+
+            choice = toupper(choice);
+
+            std::string response(1, choice);
+
+            sendLine(clientSocket, response);
+
+            if(choice != 'Y')
+            {
+                playing = false;
+            }
+        }
+
+        //Handle EXIT
+        else if (line == "EXIT")
+        {
+            std::cout << "\nGame Finished.\n";
+            std::cout << "Thank you for playing.\n";
+
+            playing = false;
+        }
     }
 
 
