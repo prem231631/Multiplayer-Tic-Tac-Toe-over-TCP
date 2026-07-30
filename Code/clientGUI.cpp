@@ -715,3 +715,137 @@ LRESULT CALLBACK WndProc(
         lParam
     );
 }
+
+//======================================================
+// WinMain()
+//======================================================
+
+int WINAPI WinMain(
+    HINSTANCE hInstance,
+    HINSTANCE,
+    LPSTR,
+    int nCmdShow)
+{
+    //--------------------------------------------------
+    // Initialize Winsock
+    //--------------------------------------------------
+
+    WSADATA wsaData;
+
+    if (WSAStartup(MAKEWORD(2,2), &wsaData) != 0)
+    {
+        MessageBoxA(
+            NULL,
+            "WSAStartup Failed!",
+            "Error",
+            MB_OK | MB_ICONERROR
+        );
+
+        return 1;
+    }
+
+    //--------------------------------------------------
+    // Register Window Class
+    //--------------------------------------------------
+
+    const char* CLASS_NAME = "TicTacToeGUI";
+
+    WNDCLASSA wc = {};
+
+    wc.lpfnWndProc   = WndProc;
+    wc.hInstance     = hInstance;
+    wc.lpszClassName = CLASS_NAME;
+
+    wc.hCursor =
+        LoadCursor(NULL, IDC_ARROW);
+
+    wc.hbrBackground =
+        (HBRUSH)(COLOR_WINDOW + 1);
+
+    if(!RegisterClassA(&wc))
+    {
+        MessageBoxA(
+            NULL,
+            "Window Registration Failed!",
+            "Error",
+            MB_OK | MB_ICONERROR
+        );
+
+        return 1;
+    }
+
+    //--------------------------------------------------
+    // Create Main Window
+    //--------------------------------------------------
+
+    g_hMainWnd =
+        CreateWindowA(
+            CLASS_NAME,
+            "Multiplayer Tic Tac Toe",
+
+            WS_OVERLAPPED |
+            WS_CAPTION |
+            WS_SYSMENU |
+            WS_MINIMIZEBOX,
+
+            CW_USEDEFAULT,
+            CW_USEDEFAULT,
+
+            310,
+            355,
+
+            NULL,
+            NULL,
+
+            hInstance,
+            NULL
+        );
+
+    if(g_hMainWnd == NULL)
+    {
+        MessageBoxA(
+            NULL,
+            "Window Creation Failed!",
+            "Error",
+            MB_OK | MB_ICONERROR
+        );
+
+        return 1;
+    }
+
+    //--------------------------------------------------
+    // Show Window
+    //--------------------------------------------------
+
+    ShowWindow(
+        g_hMainWnd,
+        nCmdShow
+    );
+
+    UpdateWindow(
+        g_hMainWnd
+    );
+
+    //--------------------------------------------------
+    // Message Loop
+    //--------------------------------------------------
+
+    MSG msg;
+
+    while(GetMessage(
+            &msg,
+            NULL,
+            0,
+            0))
+    {
+        TranslateMessage(
+            &msg
+        );
+
+        DispatchMessage(
+            &msg
+        );
+    }
+
+    return (int)msg.wParam;
+}
