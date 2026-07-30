@@ -301,6 +301,24 @@ int main()
                 currentSymbol = (currentSymbol == 'X') ? 'O' : 'X';
             }
         }
+
+        // Ask both players if they want to play again
+        sendLine(clientX, "RESTART?");
+        sendLine(clientO, "RESTART?");
+
+        std::string respX;
+        std::string respO;
+
+        bool okX = recvLine(clientX, respX);
+        bool okO = recvLine(clientO, respO);
+
+        if (!okX || !okO || respX != "Y" || respO != "Y")
+        {
+            sendLine(clientX, "EXIT");
+            sendLine(clientO, "EXIT");
+
+            keepPlaying = false;
+        }
     }
 
 
