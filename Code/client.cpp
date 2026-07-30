@@ -202,6 +202,13 @@ int main()
         {
             std::cout << "Waiting for opponent...\n";
         }
+
+        //Handle INVALID
+        else if (line == "INVALID")
+        {
+            std::cout << "Invalid move.\n";
+            std::cout << "Please choose another cell.\n";
+        }
     }
 
 
