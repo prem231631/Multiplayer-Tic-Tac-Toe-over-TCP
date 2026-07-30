@@ -95,6 +95,29 @@ int main()
         0
     );
 
+    //sendLine()
+    bool sendLine(SOCKET s, const std::string& msg)
+    {
+        std::string out = msg + "\n";
+        int total = 0;
+        int len = (int)out.size();
+
+        while(total < len)
+        {
+            int sent = send(
+                s,
+                out.c_str() + total,
+                len - total,
+                0
+            );
+
+            if(sent == SOCKET_ERROR)
+                return false;
+            total += sent;
+        }
+        return true;
+    }
+
     WSACleanup();
 
     return 0;
