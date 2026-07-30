@@ -6,6 +6,8 @@
 #include <ws2tcpip.h>
 #include <iostream>
 
+#define BOARD_SIZE 9
+
 #pragma comment(lib,"ws2_32.lib")
 
 //sendLine()
@@ -51,6 +53,20 @@ bool recvLine(SOCKET s, std::string& outLine)
     }
     return true;
 };
+
+//
+char board[9];
+void resetBoard(char board[])
+{
+    for(int i=0; i<BOARD_SIZE; i++)
+    {
+        board[i]= '_';
+    }
+}
+std::string boardToString(const char board[])
+{
+    return std::string(board, BOARD_SIZE);
+}
 
 int main()
 {
@@ -138,6 +154,8 @@ int main()
         strlen(message),
         0
     );
+
+
 
     WSACleanup();
 
