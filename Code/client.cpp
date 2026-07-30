@@ -57,6 +57,20 @@ int main()
 
     std::cout<<"Connected to Server"<<std::endl;
 
+    //Succeed Message
+    char buffer[100];
+
+    int bytesReceived = recv(
+        clientSocket,
+        buffer,
+        sizeof(buffer),
+        0
+    );
+
+    buffer[bytesReceived] = '\0';
+
+    std::cout << buffer << std::endl;
+
     closesocket(clientSocket);
 
     WSACleanup();
