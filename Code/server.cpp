@@ -116,7 +116,29 @@ int main()
             total += sent;
         }
         return true;
-    }
+    };
+
+    //recvLine()
+    bool recvLine(SOCKET s, std::string& outLine)
+    {
+        outLine.clear();
+        char c;
+
+        while(true)
+        {
+            int r = recv(s, &c, 1, 0);
+
+            if(r <= 0)
+                return false;
+
+            if(c == '\n')
+                break;
+
+            if(c != '\r')
+                outLine += c;
+        }
+        return true;
+    };
 
     WSACleanup();
 
