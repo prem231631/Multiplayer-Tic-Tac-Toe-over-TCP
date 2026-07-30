@@ -57,6 +57,19 @@ int main()
 
     std::cout << "Bind successful." << std::endl;
 
+    //Listening
+    int listenResult = listen(serverSocket, 2);
+
+    if (listenResult == SOCKET_ERROR)
+    {
+        std::cout << "Listen failed." << std::endl;
+        closesocket(serverSocket);
+        WSACleanup();
+        return 1;
+    }
+
+    std::cout << "Server is listening..." << std::endl;
+
     WSACleanup();
 
     return 0;
