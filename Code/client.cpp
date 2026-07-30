@@ -209,6 +209,14 @@ int main()
             std::cout << "Invalid move.\n";
             std::cout << "Please choose another cell.\n";
         }
+
+        //Handle RESULT:WIN
+        else if (line == "RESULT:WIN")
+        {
+            std::cout << "\n************************\n";
+            std::cout << "      YOU WIN!\n";
+            std::cout << "************************\n";
+        }
     }
 
 
