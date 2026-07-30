@@ -53,6 +53,47 @@ bool recvLine(SOCKET s, std::string& outLine)
     return true;
 };
 
+//Printing the Board
+void printBoard(const std::string& board)
+{
+    auto cell = [&](int i)
+    {
+        return board[i] == '_'
+            ? std::to_string(i)
+            : std::string(1, board[i]);
+    };
+
+    std::cout << "\n";
+
+    std::cout << " "
+              << cell(0)
+              << " | "
+              << cell(1)
+              << " | "
+              << cell(2)
+              << "\n";
+
+    std::cout << "---+---+---\n";
+
+    std::cout << " "
+              << cell(3)
+              << " | "
+              << cell(4)
+              << " | "
+              << cell(5)
+              << "\n";
+
+    std::cout << "---+---+---\n";
+
+    std::cout << " "
+              << cell(6)
+              << " | "
+              << cell(7)
+              << " | "
+              << cell(8)
+              << "\n\n";
+}
+
 int main()
 {
     WSADATA wsaData;
