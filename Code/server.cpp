@@ -69,6 +69,53 @@ void resetBoard(char board[])
     }
 }
 
+//checkWinner
+char checkWinner(const char board[])
+{
+    static const int lines[8][3] =
+    {
+        {0,1,2},
+        {3,4,5},
+        {6,7,8},
+
+        {0,3,6},
+        {1,4,7},
+        {2,5,8},
+
+        {0,4,8},
+        {2,4,6}
+    };
+
+    for(int i = 0; i < 8; i++)
+    {
+        int a = lines[i][0];
+        int b = lines[i][1];
+        int c = lines[i][2];
+
+        if(board[a] != '_' &&
+           board[a] == board[b] &&
+           board[b] == board[c])
+        {
+            return board[a];
+        }
+    }
+
+    return 0;
+}
+
+//Detect a Draw
+bool isBoardFull(const char board[])
+{
+    for(int i = 0; i < BOARD_SIZE; i++)
+    {
+        if(board[i] == '_')
+        {
+            return false;
+        }
+    }
+    return true;
+}
+
 
 int main()
 {
@@ -184,7 +231,75 @@ int main()
 
         while (!gameOver)
         {
-        // We'll build this loop now
+            // Tell players whose turn it is
+            sendLine(current, "YOURTURN");
+            sendLine(other, "WAIT");
+
+            // Receive move
+            std::string line;
+
+            if (!recvLine(current, line))
+            {
+                keepPlaying = false;
+                gameOver = true;
+                break;
+            }
+
+            // Parse MOVE:x
+            int pos = -1;
+
+            if (line.rfind("MOVE:", 0) == 0)
+            {
+                try
+                {
+                    pos = std::stoi(line.substr(5));
+                }
+                catch (...)
+                {
+                    pos = -1;
+                }
+            }
+
+            // Validate move
+            if (pos < 0 || pos >= BOARD_SIZE || board[pos] != '_')
+            {
+                sendLine(current, "INVALID");
+                continue;
+            }
+
+            // Update board
+            board[pos] = currentSymbol;
+
+            // Send updated board
+            std::string boardMsg = "BOARD:" + boardToString(board);
+
+            sendLine(clientX, boardMsg);
+            sendLine(clientO, boardMsg);
+
+            // Check winner
+            char winner = checkWinner(board);
+
+            if (winner)
+            {
+                sendLine(current, "RESULT:WIN");
+                sendLine(other, "RESULT:LOSE");
+
+                gameOver = true;
+            }
+            else if (isBoardFull(board))
+            {
+                sendLine(clientX, "RESULT:DRAW");
+                sendLine(clientO, "RESULT:DRAW");
+
+                gameOver = true;
+            }
+            else
+            {
+                // Switch turns
+                std::swap(current, other);
+
+                currentSymbol = (currentSymbol == 'X') ? 'O' : 'X';
+            }
         }
     }
 
