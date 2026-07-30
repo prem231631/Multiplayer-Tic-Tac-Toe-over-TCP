@@ -54,8 +54,13 @@ bool recvLine(SOCKET s, std::string& outLine)
     return true;
 };
 
-//
-char board[9];
+//Convert board into string
+std::string boardToString(const char board[])
+{
+    return std::string(board, BOARD_SIZE);
+}
+
+//Reset Board
 void resetBoard(char board[])
 {
     for(int i=0; i<BOARD_SIZE; i++)
@@ -63,10 +68,7 @@ void resetBoard(char board[])
         board[i]= '_';
     }
 }
-std::string boardToString(const char board[])
-{
-    return std::string(board, BOARD_SIZE);
-}
+
 
 int main()
 {
@@ -130,12 +132,12 @@ int main()
 
     std::cout << "Server is listening..." << std::endl;
 
-    //Accepting a client
-    std::cout << "Waiting for client..." << std::endl;
+    //Accepting two players
+    std::cout << "Waiting for Player X..." << std::endl;
 
-    SOCKET clientSocket = accept(serverSocket, NULL, NULL);
+    SOCKET clientX = accept(serverSocket, NULL, NULL);
 
-    if (clientSocket == INVALID_SOCKET)
+    if (clientX == INVALID_SOCKET)
     {
         std::cout << "Accept failed." << std::endl;
         closesocket(serverSocket);
@@ -143,21 +145,55 @@ int main()
         return 1;
     }
 
-    std::cout << "Client connected!" << std::endl;
+    std::cout << "Player X connected." << std::endl;
 
-    //Succeed Message
-    const char* message = "Hello Client";
+    std::cout << "Waiting for Player O..." << std::endl;
 
-    send(
-        clientSocket,
-        message,
-        strlen(message),
-        0
-    );
+    SOCKET clientO = accept(serverSocket, NULL, NULL);
+
+    if (clientO == INVALID_SOCKET)
+    {
+        std::cout << "Accept failed." << std::endl;
+        closesocket(clientX);
+        closesocket(serverSocket);
+        WSACleanup();
+        return 1;
+    }
+
+    std::cout << "Player O connected." << std::endl;
+
+    sendLine(clientX, "SYMBOL: X");
+    sendLine(clientO, "SYMBOL: O");
+    
+    //Game Loop
+    char board[BOARD_SIZE];
+    bool keepPlaying = true;
+    while (keepPlaying)
+    {
+        resetBoard(board);
+
+        SOCKET current = clientX;
+        SOCKET other = clientO;
+
+        char currentSymbol = 'X';
+
+        sendLine(clientX, "BOARD:" + boardToString(board));
+        sendLine(clientO, "BOARD:" + boardToString(board));
+
+        bool gameOver = false;
+
+        while (!gameOver)
+        {
+        // We'll build this loop now
+        }
+    }
 
 
 
     WSACleanup();
+    closesocket(clientX);
+    closesocket(clientO);
+    closesocket(serverSocket);
 
     return 0;
 }

@@ -8,6 +8,8 @@
 
 #pragma comment(lib,"ws2_32.lib")
 
+#define PORT 54000
+#define BOARD_SIZE 9
 
 //sendLine()
 bool sendLine(SOCKET s, const std::string& msg)
@@ -143,23 +145,23 @@ int main()
 
     std::cout<<"Connected to Server"<<std::endl;
 
-    //Succeed Message
-    char buffer[100];
+    //
+    char mySymbol = 0;
+    std::string line;
+    std::string currentBoard(9, '_');
+    bool playing = true;
 
-    int bytesReceived = recv(
-        clientSocket,
-        buffer,
-        sizeof(buffer),
-        0
-    );
+    while (playing)
+    {
+        if (!recvLine(clientSocket, line))
+        {
+            std::cout << "Disconnected from server.\n";
+            break;
+        }
+        // We'll process messages here
+    }
 
-    buffer[bytesReceived] = '\0';
-
-    std::cout << buffer << std::endl;
-
-    closesocket(clientSocket);
 
     WSACleanup();
-
     return 0;
 }
