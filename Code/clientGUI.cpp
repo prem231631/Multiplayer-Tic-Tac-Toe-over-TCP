@@ -248,3 +248,470 @@ LRESULT CALLBACK WndProc(
     WPARAM,
     LPARAM
 );
+
+//======================================================
+// Window Procedure
+//======================================================
+
+LRESULT CALLBACK WndProc(
+    HWND hwnd,
+    UINT msg,
+    WPARAM wParam,
+    LPARAM lParam)
+{
+    switch(msg)
+    {
+    //--------------------------------------------------
+    // Create Controls
+    //--------------------------------------------------
+    case WM_CREATE:
+    {
+        CreateWindowA(
+            "STATIC",
+            "Server IP:",
+            WS_CHILD | WS_VISIBLE,
+            10,
+            10,
+            60,
+            20,
+            hwnd,
+            NULL,
+            NULL,
+            NULL
+        );
+
+        g_hIpEdit =
+            CreateWindowA(
+                "EDIT",
+                "127.0.0.1",
+                WS_CHILD | WS_VISIBLE | WS_BORDER,
+                75,
+                8,
+                120,
+                22,
+                hwnd,
+                (HMENU)ID_IP_EDIT,
+                NULL,
+                NULL
+            );
+
+        g_hConnectBtn =
+            CreateWindowA(
+                "BUTTON",
+                "Connect",
+                WS_CHILD | WS_VISIBLE,
+                205,
+                8,
+                80,
+                22,
+                hwnd,
+                (HMENU)ID_CONNECT,
+                NULL,
+                NULL
+            );
+
+        g_hStatus =
+            CreateWindowA(
+                "STATIC",
+                "Not Connected",
+                WS_CHILD | WS_VISIBLE,
+                10,
+                40,
+                280,
+                20,
+                hwnd,
+                NULL,
+                NULL,
+                NULL
+            );
+
+        //--------------------------------------------------
+        // Create 3x3 Board
+        //--------------------------------------------------
+
+        int startX = 10;
+        int startY = 70;
+        int size = 80;
+        int gap = 5;
+
+        for(int i=0;i<BOARD_SIZE;i++)
+        {
+            int row = i / 3;
+            int col = i % 3;
+
+            g_hCells[i] =
+                CreateWindowA(
+                    "BUTTON",
+                    "",
+                    WS_CHILD |
+                    WS_VISIBLE |
+                    BS_PUSHBUTTON,
+
+                    startX + col * (size + gap),
+                    startY + row * (size + gap),
+
+                    size,
+                    size,
+
+                    hwnd,
+                    (HMENU)(ID_CELL_BASE + i),
+                    NULL,
+                    NULL
+                );
+
+            EnableWindow(
+                g_hCells[i],
+                FALSE
+            );
+        }
+
+        return 0;
+    }
+
+    //--------------------------------------------------
+    // Button Clicks
+    //--------------------------------------------------
+
+    case WM_COMMAND:
+    {
+        int id = LOWORD(wParam);
+
+        //--------------------------------------------------
+        // Connect Button
+        //--------------------------------------------------
+
+        if(id == ID_CONNECT)
+        {
+            char ip[64];
+
+            GetWindowTextA(
+                g_hIpEdit,
+                ip,
+                sizeof(ip)
+            );
+
+            g_sock =
+                socket(
+                    AF_INET,
+                    SOCK_STREAM,
+                    IPPROTO_TCP
+                );
+
+            if(g_sock == INVALID_SOCKET)
+            {
+                setStatus(
+                    "Socket creation failed."
+                );
+                return 0;
+            }
+
+            sockaddr_in serverAddr;
+
+            serverAddr.sin_family = AF_INET;
+            serverAddr.sin_port = htons(PORT);
+
+            serverAddr.sin_addr.s_addr =
+                inet_addr(ip);
+
+            if(serverAddr.sin_addr.s_addr
+                == INADDR_NONE)
+            {
+                setStatus(
+                    "Invalid IP Address"
+                );
+
+                closesocket(g_sock);
+
+                return 0;
+            }
+
+            if(connect(
+                    g_sock,
+                    (sockaddr*)&serverAddr,
+                    sizeof(serverAddr))
+                    == SOCKET_ERROR)
+            {
+                setStatus(
+                    "Connection Failed"
+                );
+
+                closesocket(g_sock);
+
+                g_sock = INVALID_SOCKET;
+
+                return 0;
+            }
+
+            setStatus(
+                "Connected. Waiting for Player..."
+            );
+
+            EnableWindow(
+                g_hConnectBtn,
+                FALSE
+            );
+
+            EnableWindow(
+                g_hIpEdit,
+                FALSE
+            );
+
+            CreateThread(
+                NULL,
+                0,
+                networkThreadProc,
+                hwnd,
+                0,
+                NULL
+            );
+
+            return 0;
+        }
+
+        //--------------------------------------------------
+        // Board Buttons
+        //--------------------------------------------------
+
+        if(id >= ID_CELL_BASE &&
+           id < ID_CELL_BASE + BOARD_SIZE)
+        {
+            int index =
+                id - ID_CELL_BASE;
+
+            if(g_myTurn &&
+               g_board[index] == '_')
+            {
+                sendLine(
+                    g_sock,
+                    "MOVE:" +
+                    std::to_string(index)
+                );
+
+                g_myTurn = false;
+
+                refreshCells();
+            }
+
+            return 0;
+        }
+
+        break;
+    }
+
+    //--------------------------------------------------
+    // SYMBOL
+    //--------------------------------------------------
+
+    case WM_APP_SYMBOL:
+    {
+        std::string* data =
+            (std::string*)lParam;
+
+        g_mySymbol =
+            (*data)[0];
+
+        setStatus(
+            std::string("You are Player ")
+            + g_mySymbol
+        );
+
+        delete data;
+
+        return 0;
+    }
+
+    //--------------------------------------------------
+    // BOARD
+    //--------------------------------------------------
+
+    case WM_APP_BOARD:
+    {
+        std::string* data =
+            (std::string*)lParam;
+
+        g_board = *data;
+
+        delete data;
+
+        g_myTurn = false;
+
+        refreshCells();
+
+        return 0;
+    }
+
+    //--------------------------------------------------
+    // YOUR TURN
+    //--------------------------------------------------
+
+    case WM_APP_YOURTURN:
+    {
+        g_myTurn = true;
+
+        setStatus(
+            std::string("Your Turn (")
+            + g_mySymbol +
+            ")"
+        );
+
+        refreshCells();
+
+        return 0;
+    }
+
+    //--------------------------------------------------
+    // WAIT
+    //--------------------------------------------------
+
+    case WM_APP_WAIT:
+    {
+        g_myTurn = false;
+
+        setStatus(
+            "Waiting for Opponent..."
+        );
+
+        refreshCells();
+
+        return 0;
+    }
+
+    //--------------------------------------------------
+    // INVALID
+    //--------------------------------------------------
+
+    case WM_APP_INVALID:
+    {
+        MessageBoxA(
+            hwnd,
+            "Invalid Move!",
+            "Error",
+            MB_OK | MB_ICONWARNING
+        );
+
+        return 0;
+    }
+
+    //--------------------------------------------------
+    // RESULT
+    //--------------------------------------------------
+
+    case WM_APP_RESULT:
+    {
+        std::string* data =
+            (std::string*)lParam;
+
+        std::string result = *data;
+
+        delete data;
+
+        g_myTurn = false;
+
+        refreshCells();
+
+        std::string text;
+
+        if(result == "WIN")
+            text = "YOU WIN!";
+
+        else if(result == "LOSE")
+            text = "YOU LOSE!";
+
+        else
+            text = "DRAW!";
+
+        MessageBoxA(
+            hwnd,
+            text.c_str(),
+            "Game Over",
+            MB_OK | MB_ICONINFORMATION
+        );
+
+        return 0;
+    }
+
+    //--------------------------------------------------
+    // RESTART
+    //--------------------------------------------------
+
+    case WM_APP_RESTART:
+    {
+        int ans =
+            MessageBoxA(
+                hwnd,
+                "Play Again?",
+                "Restart",
+                MB_YESNO |
+                MB_ICONQUESTION
+            );
+
+        if(ans == IDYES)
+            sendLine(g_sock, "Y");
+        else
+            sendLine(g_sock, "N");
+
+        return 0;
+    }
+
+    //--------------------------------------------------
+    // EXIT
+    //--------------------------------------------------
+
+    case WM_APP_EXIT:
+    {
+        setStatus(
+            "Game Finished."
+        );
+
+        for(int i=0;i<BOARD_SIZE;i++)
+            EnableWindow(
+                g_hCells[i],
+                FALSE
+            );
+
+        return 0;
+    }
+
+    //--------------------------------------------------
+    // DISCONNECT
+    //--------------------------------------------------
+
+    case WM_APP_DISCONNECT:
+    {
+        setStatus(
+            "Disconnected."
+        );
+
+        for(int i=0;i<BOARD_SIZE;i++)
+            EnableWindow(
+                g_hCells[i],
+                FALSE
+            );
+
+        return 0;
+    }
+
+    //--------------------------------------------------
+    // CLOSE WINDOW
+    //--------------------------------------------------
+
+    case WM_DESTROY:
+    {
+        if(g_sock != INVALID_SOCKET)
+            closesocket(g_sock);
+
+        WSACleanup();
+
+        PostQuitMessage(0);
+
+        return 0;
+    }
+    }
+
+    return DefWindowProc(
+        hwnd,
+        msg,
+        wParam,
+        lParam
+    );
+}
