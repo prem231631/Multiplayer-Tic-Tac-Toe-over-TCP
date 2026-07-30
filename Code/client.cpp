@@ -158,7 +158,44 @@ int main()
             std::cout << "Disconnected from server.\n";
             break;
         }
-        // We'll process messages here
+
+        if (line.rfind("SYMBOL:", 0) == 0)
+        {
+            mySymbol = line[7];
+            std::cout << "You are Player "
+                    << mySymbol
+                    << std::endl;
+        }
+
+        else if (line.rfind("BOARD:", 0) == 0)
+        {
+            currentBoard = line.substr(6);
+            printBoard(currentBoard);
+        }
+
+        //Handle YOURTURN
+        else if (line == "YOURTURN")
+        {
+            int pos = -1;
+            while (true)
+            {
+                std::cout << "Your turn (" << mySymbol << ").\n";
+                std::cout << "Enter cell number (0-8): ";
+
+                std::cin >> pos;
+
+                if (std::cin.fail())
+                {
+                    std::cin.clear();
+                    std::cin.ignore(10000, '\n');
+
+                    std::cout << "Please enter a valid number.\n";
+                    continue;
+                }
+                break;
+            }
+            sendLine(clientSocket, "MOVE:" + std::to_string(pos));
+        }
     }
 
 
