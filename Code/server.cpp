@@ -85,7 +85,15 @@ int main()
 
     std::cout << "Client connected!" << std::endl;
 
-    
+    //Succeed Message
+    const char* message = "Hello Client";
+
+    send(
+        clientSocket,
+        message,
+        strlen(message),
+        0
+    );
 
     WSACleanup();
 
