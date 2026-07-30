@@ -8,6 +8,50 @@
 
 #pragma comment(lib,"ws2_32.lib")
 
+//sendLine()
+bool sendLine(SOCKET s, const std::string& msg)
+{
+    std::string out = msg + "\n";
+    int total = 0;
+    int len = (int)out.size();
+
+    while(total < len)
+    {
+        int sent = send(
+            s,
+            out.c_str() + total,
+            len - total,
+            0
+        );
+
+        if(sent == SOCKET_ERROR)
+            return false;
+        total += sent;
+    }
+    return true;
+};
+
+//recvLine()
+bool recvLine(SOCKET s, std::string& outLine)
+{
+    outLine.clear();
+    char c;
+
+    while(true)
+    {
+        int r = recv(s, &c, 1, 0);
+        if(r <= 0)
+            return false;
+
+        if(c == '\n')
+            break;
+
+        if(c != '\r')
+            outLine += c;
+    }
+    return true;
+};
+
 int main()
 {
     WSADATA wsaData;
@@ -94,51 +138,6 @@ int main()
         strlen(message),
         0
     );
-
-    //sendLine()
-    bool sendLine(SOCKET s, const std::string& msg)
-    {
-        std::string out = msg + "\n";
-        int total = 0;
-        int len = (int)out.size();
-
-        while(total < len)
-        {
-            int sent = send(
-                s,
-                out.c_str() + total,
-                len - total,
-                0
-            );
-
-            if(sent == SOCKET_ERROR)
-                return false;
-            total += sent;
-        }
-        return true;
-    };
-
-    //recvLine()
-    bool recvLine(SOCKET s, std::string& outLine)
-    {
-        outLine.clear();
-        char c;
-
-        while(true)
-        {
-            int r = recv(s, &c, 1, 0);
-
-            if(r <= 0)
-                return false;
-
-            if(c == '\n')
-                break;
-
-            if(c != '\r')
-                outLine += c;
-        }
-        return true;
-    };
 
     WSACleanup();
 
